@@ -1,0 +1,125 @@
+<?php
+/**
+ *  _____  _____  _                         _
+ * |     ||__   ||_| ___  ___     ___  ___ | |_
+ * |  |  ||   __|| || . ||   | _ |   || -_||  _|
+ * |__  _||_____||_||___||_|_||_||_|_||___||_|
+ *    |__| hello@qzion.net
+ */
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateAclTables extends Migration
+{
+    /**
+     * Creates 5 tables in the Database.
+     * 1. permissions:
+     * \_ id (increments)
+     * \_ name
+     * \_ guard_name
+     *
+     * 2. roles:
+     * \_ id (increments)
+     * \_ name
+     * \_ guard_name
+     *
+     * 3. model_has_permissions:
+     * \_ permission_id -> permissions.id
+     * \_ model_id -> *.id where * represents the model you have attached to.
+     * \_ model_type -> the model (ex. App\Auth\User)
+     * \_ * These have been linked in Database to cascade delete *
+     *
+     * 4. model_has_roles:
+     * \_ role_id -> roles.id
+     * \_ model_id -> *.id where * represents the model you have attached to.
+     * \_ model_type -> the model (ex. App\Auth\User)
+     * \_ * These have been linked in Database to cascade delete *
+     *
+     * 5. role_has_permissions:
+     * \_ permission_id -> permissions.id
+     * \_ role_id -> roles.id
+     * \_ * These have been linked in Database to cascade delete *
+     */
+    public function up()
+    {
+        $tableNames = config('acl.table_names');
+
+        /* Create The Permissions Table */
+        Schema::create($tableNames['permissions'], function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->string('guard_name');
+            $table->timestamps();
+        });
+
+        /*  Create The Roles Table */
+        Schema::create($tableNames['roles'], function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->string('guard_name');
+            $table->timestamps();
+        });
+
+        /* Creates The model_has_permissions table */
+        Schema::create($tableNames['model_has_permissions'], function (Blueprint $table) use ($tableNames) {
+            $table->unsignedInteger('permission_id');
+            $table->morphs('model');
+
+            $table->foreign('permission_id')
+                ->references('id')
+                ->on($tableNames['permissions'])
+                ->onDelete('cascade');
+
+            $table->primary(['permission_id', 'model_id', 'model_type']);
+        });
+
+        /* Creates model_has_roles table  */
+        Schema::create($tableNames['model_has_roles'], function (Blueprint $table) use ($tableNames) {
+            $table->unsignedInteger('role_id');
+            $table->morphs('model');
+
+            $table->foreign('role_id')
+                ->references('id')
+                ->on($tableNames['roles'])
+                ->onDelete('cascade');
+
+            $table->primary(['role_id', 'model_id', 'model_type']);
+        });
+
+        /* Creates role_has_permissions table */
+        Schema::create($tableNames['role_has_permissions'], function (Blueprint $table) use ($tableNames) {
+            $table->unsignedInteger('permission_id');
+            $table->unsignedInteger('role_id');
+
+            $table->foreign('permission_id')
+                ->references('id')
+                ->on($tableNames['permissions'])
+                ->onDelete('cascade');
+
+            $table->foreign('role_id')
+                ->references('id')
+                ->on($tableNames['roles'])
+                ->onDelete('cascade');
+
+            $table->primary(['permission_id', 'role_id']);
+        });
+
+    }
+
+    /**
+     * Drop 5 Tables in the Database
+     */
+    public function down()
+    {
+        $tableNames = config('acl.table_names');
+
+        Schema::drop($tableNames['role_has_permissions']);
+        Schema::drop($tableNames['model_has_roles']);
+        Schema::drop($tableNames['model_has_permissions']);
+        Schema::drop($tableNames['roles']);
+        Schema::drop($tableNames['permissions']);
+
+    }
+}
