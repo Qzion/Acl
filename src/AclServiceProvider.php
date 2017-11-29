@@ -22,7 +22,7 @@ class AclServiceProvider extends ServiceProvider
     {
         // Publish The config file to the main laravel app config.
         $this->publishes([
-            __DIR__.'/../config/acl.php' => $this->app->configPath().'acl.php',
+            __DIR__.'/../config/acl.php' => $this->app->configPath().'/acl.php',
         ], 'config');
 
         // Publish the migration file to main laravel app Migrations.
