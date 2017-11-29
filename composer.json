@@ -1,6 +1,7 @@
 {
     "name": "qzion/acl",
     "description": "A set of access control tools for Laravel",
+    "minimum-stability": "stable",
     "require": {
         "php" : ">=7.0",
         "illuminate/auth": "~5.3.0|~5.4.0|~5.5.0",
